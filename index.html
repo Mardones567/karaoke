@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Karaoke Playlist</title>
+  <style>
+    /* Estilos generales */
+    body {
+      font-family: 'Arial', sans-serif;
+      margin: 0;
+      padding: 0;
+      background-color: #f8f9fa;
+      color: #333;
+    }
+
+    /* Contenedor principal */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Títulos */
+    h1, h2, h3 {
+      color: #4CAF50;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      font-size: 2.5em;
+    }
+
+    h2 {
+      font-size: 1.8em;
+    }
+
+    /* Formulario de agregar canción */
+    #songForm {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    #songForm input {
+      padding: 10px;
+      font-size: 1em;
+      width: 250px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      box-sizing: border-box;
+    }
+
+    #songForm button {
+      padding: 10px 20px;
+      font-size: 1.1em;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #songForm button:hover {
+      background-color: #45a049;
+    }
+
+    /* Lista de canciones */
+    #playlist {
+      display: flex;
+      flex-wrap: wrap;
+      justify-content: center;
+      gap: 20px;
+      list-style-type: none;
+      padding: 0;
+    }
+
+    #playlist li {
+      background-color: #fff;
+      border-radius: 10px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      width: 100%;
+      max-width: 560px;
+      margin: 10px;
+      text-align: center;
+      padding: 10px;
+    }
+
+    iframe {
+      width: 100%;
+      height: 315px;
+      border-radius: 10px;
+    }
+
+    /* Responsividad */
+    @media (max-width: 768px) {
+      #songForm {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #songForm input,
+      #songForm button {
+        width: 100%;
+        max-width: 300px;
+      }
+
+      #playlist li {
+        max-width: 100%;
+        margin: 10px 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>¡Bienvenido al Karaoke!</h1>
+    <h2>Lista de Canciones</h2>
+    
+    <ul id="playlist">
+      <!-- La lista de canciones se actualizará aquí -->
+    </ul>
+
+    <h3>Agregar una Canción</h3>
+    <form id="songForm">
+      <input type="text" id="song" placeholder="Nombre de la canción" required>
+      <input type="text" id="user" placeholder="Tu nombre" required>
+      <button type="submit">Agregar Canción</button>
+    </form>
+  </div>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();  // Conectar con el servidor WebSocket
+
+    // Función para actualizar la lista de canciones en el frontend
+    function updatePlaylist(playlist) {
+      const playlistContainer = document.getElementById('playlist');
+      playlistContainer.innerHTML = '';  // Limpiar la lista actual
+
+      playlist.forEach(item => {
+        const li = document.createElement('li');
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube.com/embed/${item.videoId}`;
+        iframe.title = item.song;
+        li.appendChild(iframe);
+        playlistContainer.appendChild(li);
+      });
+    }
+
+    // Escuchar el evento 'playlist-updated' emitido por el servidor
+    socket.on('playlist-updated', updatePlaylist);
+
+    // Manejar el formulario de agregar canción
+    document.getElementById('songForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const song = document.getElementById('song').value;
+      const user = document.getElementById('user').value;
+
+      // Enviar la nueva canción al servidor
+      fetch('/add-song', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ song, user })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        document.getElementById('song').value = '';  // Limpiar el campo
+        document.getElementById('user').value = '';  // Limpiar el campo
+      })
+      .catch(error => console.error('Error al agregar la canción:', error));
+    });
+  </script>
+</body>
+</html>

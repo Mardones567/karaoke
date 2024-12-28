@@ -12,11 +12,12 @@ const io = socketIo(server);
 const port = process.env.PORT || 3000;
 
 // Reemplaza con tu clave de API de YouTube
-const YOUTUBE_API_KEY = 'AIzaSyAwyAx7ayjZvupNpR6mea2gziXQ_tUn6h0';
+const YOUTUBE_API_KEY = ''; // Reemplaza con tu clave de API de YouTube
 const PLAYLIST_ID = 'PL8vad0sWoXX1SfUM5ptEirdqzd6ZZvyhm';
 
 // Array que contendrá la playlist
 let playlist = [];
+let currentSong = null; // Video que está en ejecución
 
 // Obtener los videos de la playlist de YouTube
 async function getPlaylist() {
@@ -29,15 +30,32 @@ async function getPlaylist() {
         key: YOUTUBE_API_KEY
       }
     });
+
+    // Extraer los videos de la playlist
     playlist = response.data.items.map(item => ({
       song: item.snippet.title,
       videoId: item.snippet.resourceId.videoId,
       user: 'YouTube'  // O puedes asignar algún usuario si se modifica la playlist
     }));
+
+    // Si no hay un video actual, asignar el primer video
+    if (!currentSong && playlist.length > 0) {
+      setCurrentSong(playlist[0]); // Iniciar con el primer video de la lista
+    }
+
+    // Emitir la lista de reproducción actualizada
     io.emit('playlist-updated', playlist);
+    io.emit('current-song-updated', currentSong);
+
   } catch (error) {
     console.error('Error al obtener la playlist de YouTube:', error);
   }
+}
+
+// Función para actualizar el video actual
+function setCurrentSong(song) {
+  currentSong = song;
+  io.emit('current-song-updated', currentSong); // Emitir el video actual a los clientes
 }
 
 // Ruta para obtener la lista de canciones
@@ -45,7 +63,7 @@ app.get('/playlist', (req, res) => {
   res.json(playlist);
 });
 
-// Ruta para agregar una canción a la lista (esto lo puedes ajustar como prefieras)
+// Ruta para agregar una canción a la lista
 app.post('/add-song', express.json(), (req, res) => {
   const { song, user } = req.body;
   if (song && user) {
@@ -63,8 +81,10 @@ app.use(express.static('public'));
 // Configurar WebSocket para manejar eventos
 io.on('connection', (socket) => {
   console.log('A user connected');
-  // Enviar la lista actual al cliente cuando se conecte
+
+  // Enviar la lista actual y el video actual al cliente cuando se conecte
   socket.emit('playlist-updated', playlist);
+  socket.emit('current-song-updated', currentSong);
 
   socket.on('disconnect', () => {
     console.log('User disconnected');
