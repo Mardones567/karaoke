@@ -5,26 +5,102 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Karaoke Playlist</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; }
-    #playlist { margin-top: 20px; list-style-type: none; padding: 0; }
-    #playlist li { margin: 10px 0; }
-    iframe { width: 560px; height: 315px; border: none; }
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #f4f4f4;
+      color: #333;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: linear-gradient(135deg, #ff4b2b, #ff416c);
+    }
+    h1 {
+      color: #fff;
+      font-size: 3em;
+      margin-top: 0;
+      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    h2, h3 {
+      color: #fff;
+      margin: 10px 0;
+    }
+    #playlist {
+      margin-top: 20px;
+      list-style-type: none;
+      padding: 0;
+      width: 80%;
+      max-width: 800px;
+    }
+    #playlist li {
+      margin: 15px 0;
+      background-color: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      padding: 10px;
+    }
+    iframe {
+      width: 100%;
+      height: 315px;
+      border-radius: 8px;
+    }
+    form {
+      background-color: #fff;
+      padding: 20px;
+      border-radius: 10px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+      margin-top: 20px;
+      display: flex;
+      flex-direction: column;
+      width: 300px;
+      gap: 10px;
+    }
+    input[type="text"] {
+      padding: 10px;
+      border-radius: 5px;
+      border: 1px solid #ddd;
+      font-size: 1em;
+    }
+    button {
+      padding: 10px;
+      background-color: #ff416c;
+      color: #fff;
+      border: none;
+      border-radius: 5px;
+      font-size: 1.2em;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    button:hover {
+      background-color: #ff4b2b;
+    }
+    .container {
+      text-align: center;
+      margin: 0 auto;
+      max-width: 960px;
+      padding: 20px;
+    }
   </style>
 </head>
 <body>
-  <h1>¡Bienvenido al Karaoke!</h1>
-  <h2>Lista de Canciones</h2>
-  
-  <ul id="playlist">
-    <!-- La lista de canciones se actualizará aquí -->
-  </ul>
+  <div class="container">
+    <h1>¡Bienvenido al Karaoke!</h1>
+    <h2>Lista de Canciones</h2>
 
-  <h3>Agregar una Canción</h3>
-  <form id="songForm">
-    <input type="text" id="song" placeholder="Nombre de la canción" required>
-    <input type="text" id="user" placeholder="Tu nombre" required>
-    <button type="submit">Agregar Canción</button>
-  </form>
+    <ul id="playlist">
+      <!-- La lista de canciones se actualizará aquí -->
+    </ul>
+
+    <h3>Agregar una Canción</h3>
+    <form id="songForm">
+      <input type="text" id="song" placeholder="Nombre de la canción" required>
+      <input type="text" id="user" placeholder="Tu nombre" required>
+      <button type="submit">Agregar Canción</button>
+    </form>
+  </div>
 
   <script src="/socket.io/socket.io.js"></script>
   <script>
