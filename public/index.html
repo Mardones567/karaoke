@@ -5,94 +5,100 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Karaoke Playlist</title>
   <style>
+    /* Estilos generales */
     body {
       font-family: 'Arial', sans-serif;
-      background-color: #f4f4f4;
-      color: #333;
       margin: 0;
       padding: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background: linear-gradient(135deg, #ff4b2b, #ff416c);
+      background-color: #f8f9fa;
+      color: #333;
     }
+
+    /* Contenedor principal */
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+
+    /* Títulos */
+    h1, h2, h3 {
+      color: #4CAF50;
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
     h1 {
-      color: #fff;
-      font-size: 3em;
-      margin-top: 0;
-      text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.2);
+      font-size: 2.5em;
     }
-    h2, h3 {
-      color: #fff;
-      margin: 10px 0;
+
+    h2 {
+      font-size: 1.8em;
     }
-    #playlist {
+
+    /* Botones de control de reproducción */
+    .controls {
+      display: flex;
+      justify-content: center;
+      gap: 20px;
       margin-top: 20px;
-      list-style-type: none;
-      padding: 0;
-      width: 80%;
-      max-width: 800px;
     }
-    #playlist li {
-      margin: 15px 0;
-      background-color: #fff;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      padding: 10px;
+
+    .controls button {
+      padding: 10px 20px;
+      font-size: 1.2em;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
     }
+
+    .controls button:hover {
+      background-color: #45a049;
+    }
+
+    /* Reproductor de la canción */
+    #currentSong {
+      margin-top: 20px;
+      text-align: center;
+    }
+
     iframe {
       width: 100%;
       height: 315px;
-      border-radius: 8px;
-    }
-    form {
-      background-color: #fff;
-      padding: 20px;
       border-radius: 10px;
-      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-      margin-top: 20px;
-      display: flex;
-      flex-direction: column;
-      width: 300px;
-      gap: 10px;
     }
-    input[type="text"] {
-      padding: 10px;
-      border-radius: 5px;
-      border: 1px solid #ddd;
-      font-size: 1em;
-    }
-    button {
-      padding: 10px;
-      background-color: #ff416c;
-      color: #fff;
-      border: none;
-      border-radius: 5px;
-      font-size: 1.2em;
-      cursor: pointer;
-      transition: background-color 0.3s;
-    }
-    button:hover {
-      background-color: #ff4b2b;
-    }
-    .container {
-      text-align: center;
-      margin: 0 auto;
-      max-width: 960px;
-      padding: 20px;
+
+    /* Responsividad */
+    @media (max-width: 768px) {
+      #songForm {
+        flex-direction: column;
+        align-items: center;
+      }
+
+      #songForm input,
+      #songForm button {
+        width: 100%;
+        max-width: 300px;
+      }
     }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>¡Bienvenido al Karaoke!</h1>
-    <h2>Lista de Canciones</h2>
+    <h2>Reproduciendo Canción</h2>
 
-    <ul id="playlist">
-      <!-- La lista de canciones se actualizará aquí -->
-    </ul>
+    <div id="currentSong">
+      <!-- La canción que se está reproduciendo se actualizará aquí -->
+    </div>
+
+    <div class="controls">
+      <button id="playPauseBtn">Pausar</button>
+      <button id="nextBtn">Siguiente Canción</button>
+    </div>
 
     <h3>Agregar una Canción</h3>
     <form id="songForm">
@@ -106,23 +112,44 @@
   <script>
     const socket = io();  // Conectar con el servidor WebSocket
 
-    // Función para actualizar la lista de canciones en el frontend
-    function updatePlaylist(playlist) {
-      const playlistContainer = document.getElementById('playlist');
-      playlistContainer.innerHTML = '';  // Limpiar la lista actual
+    // Función para actualizar la canción actual en el frontend
+    function updateCurrentSong(song) {
+      const currentSongContainer = document.getElementById('currentSong');
+      currentSongContainer.innerHTML = '';  // Limpiar contenido actual
 
-      playlist.forEach(item => {
-        const li = document.createElement('li');
+      if (song) {
         const iframe = document.createElement('iframe');
-        iframe.src = `https://www.youtube.com/embed/${item.videoId}`;
-        iframe.title = item.song;
-        li.appendChild(iframe);
-        playlistContainer.appendChild(li);
-      });
+        iframe.src = `https://www.youtube.com/embed/${song.videoId}`;
+        iframe.title = song.song;
+        currentSongContainer.appendChild(iframe);
+      } else {
+        currentSongContainer.innerHTML = 'No hay ninguna canción en reproducción.';
+      }
     }
 
-    // Escuchar el evento 'playlist-updated' emitido por el servidor
-    socket.on('playlist-updated', updatePlaylist);
+    // Función para actualizar el estado de reproducción (pausada o en reproducción)
+    function updatePlaybackState(state) {
+      const playPauseBtn = document.getElementById('playPauseBtn');
+      if (state.isPaused) {
+        playPauseBtn.textContent = 'Reanudar';
+      } else {
+        playPauseBtn.textContent = 'Pausar';
+      }
+    }
+
+    // Escuchar el evento 'song-playing' emitido por el servidor
+    socket.on('song-playing', updateCurrentSong);
+    socket.on('playback-state', updatePlaybackState);
+
+    // Manejar el botón de pausa/reanudación
+    document.getElementById('playPauseBtn').addEventListener('click', () => {
+      fetch('/toggle-play-pause', { method: 'POST' });
+    });
+
+    // Manejar el botón de siguiente canción
+    document.getElementById('nextBtn').addEventListener('click', () => {
+      fetch('/next-song', { method: 'POST' });
+    });
 
     // Manejar el formulario de agregar canción
     document.getElementById('songForm').addEventListener('submit', (e) => {
@@ -137,13 +164,10 @@
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ song, user })
       })
-      .then(response => response.json())
-      .then(data => {
-        console.log(data);
-        document.getElementById('song').value = '';  // Limpiar el campo
-        document.getElementById('user').value = '';  // Limpiar el campo
-      })
-      .catch(error => console.error('Error al agregar la canción:', error));
+      .then(() => {
+        document.getElementById('song').value = '';
+        document.getElementById('user').value = '';
+      });
     });
   </script>
 </body>
