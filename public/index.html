@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Karaoke Playlist</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    #playlist { margin-top: 20px; list-style-type: none; padding: 0; }
+    #playlist li { margin: 10px 0; }
+    iframe { width: 560px; height: 315px; border: none; }
+  </style>
+</head>
+<body>
+  <h1>¡Bienvenido al Karaoke!</h1>
+  <h2>Lista de Canciones</h2>
+  
+  <ul id="playlist">
+    <!-- La lista de canciones se actualizará aquí -->
+  </ul>
+
+  <h3>Agregar una Canción</h3>
+  <form id="songForm">
+    <input type="text" id="song" placeholder="Nombre de la canción" required>
+    <input type="text" id="user" placeholder="Tu nombre" required>
+    <button type="submit">Agregar Canción</button>
+  </form>
+
+  <script src="/socket.io/socket.io.js"></script>
+  <script>
+    const socket = io();  // Conectar con el servidor WebSocket
+
+    // Función para actualizar la lista de canciones en el frontend
+    function updatePlaylist(playlist) {
+      const playlistContainer = document.getElementById('playlist');
+      playlistContainer.innerHTML = '';  // Limpiar la lista actual
+
+      playlist.forEach(item => {
+        const li = document.createElement('li');
+        const iframe = document.createElement('iframe');
+        iframe.src = `https://www.youtube.com/embed/${item.videoId}`;
+        iframe.title = item.song;
+        li.appendChild(iframe);
+        playlistContainer.appendChild(li);
+      });
+    }
+
+    // Escuchar el evento 'playlist-updated' emitido por el servidor
+    socket.on('playlist-updated', updatePlaylist);
+
+    // Manejar el formulario de agregar canción
+    document.getElementById('songForm').addEventListener('submit', (e) => {
+      e.preventDefault();
+
+      const song = document.getElementById('song').value;
+      const user = document.getElementById('user').value;
+
+      // Enviar la nueva canción al servidor
+      fetch('/add-song', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ song, user })
+      })
+      .then(response => response.json())
+      .then(data => {
+        console.log(data);
+        document.getElementById('song').value = '';  // Limpiar el campo
+        document.getElementById('user').value = '';  // Limpiar el campo
+      })
+      .catch(error => console.error('Error al agregar la canción:', error));
+    });
+  </script>
+</body>
+</html>
