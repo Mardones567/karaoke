@@ -12,7 +12,7 @@ const io = socketIo(server);
 const port = process.env.PORT || 3000;
 
 // Reemplaza con tu clave de API de YouTube
-const YOUTUBE_API_KEY = ''; // Reemplaza con tu clave de API de YouTube
+const YOUTUBE_API_KEY = 'AIzaSyAwyAx7ayjZvupNpR6mea2gziXQ_tUn6h0'; // Reemplaza con tu clave de API de YouTube
 const PLAYLIST_ID = 'PL8vad0sWoXX1SfUM5ptEirdqzd6ZZvyhm';
 
 // Array que contendrá la playlist
