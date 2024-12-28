@@ -18,6 +18,7 @@ const PLAYLIST_ID = 'PL8vad0sWoXX1SfUM5ptEirdqzd6ZZvyhm';
 // Array que contendrá la playlist
 let playlist = [];
 let currentSong = null; // Variable para almacenar la canción actual
+let isPaused = false; // Estado de la reproducción (pausada o en reproducción)
 
 // Obtener los videos de la playlist de YouTube
 async function getPlaylist() {
@@ -35,13 +36,25 @@ async function getPlaylist() {
       videoId: item.snippet.resourceId.videoId,
       user: 'YouTube'
     }));
-    // Emitir la canción actual si está disponible
-    if (currentSong) {
-      io.emit('song-playing', currentSong);
-    }
   } catch (error) {
     console.error('Error al obtener la playlist de YouTube:', error);
   }
+}
+
+// Cambiar a la siguiente canción en la lista
+function nextSong() {
+  const currentIndex = playlist.findIndex(song => song.videoId === currentSong.videoId);
+  const nextIndex = (currentIndex + 1) % playlist.length; // Asegura que vuelva al principio cuando termine la lista
+  currentSong = playlist[nextIndex];
+  isPaused = false; // Reanudar la reproducción
+  io.emit('song-playing', currentSong);
+  io.emit('playback-state', { isPaused });
+}
+
+// Control de reproducción (pausar, continuar, siguiente)
+function togglePlayPause() {
+  isPaused = !isPaused;
+  io.emit('playback-state', { isPaused });
 }
 
 // Ruta para obtener la lista de canciones
@@ -66,7 +79,9 @@ app.post('/play-song', express.json(), (req, res) => {
   const { song, videoId } = req.body;
   if (song && videoId) {
     currentSong = { song, videoId };
+    isPaused = false; // Reanudar la reproducción
     io.emit('song-playing', currentSong); // Emitir la canción actual a los clientes
+    io.emit('playback-state', { isPaused });
     res.status(200).send('Song is now playing');
   } else {
     res.status(400).send('Missing song or videoId');
@@ -79,10 +94,9 @@ app.use(express.static('public'));
 // Configurar WebSocket para manejar eventos
 io.on('connection', (socket) => {
   console.log('A user connected');
-  // Enviar la canción actual al cliente cuando se conecte
-  if (currentSong) {
-    socket.emit('song-playing', currentSong);
-  }
+  // Enviar la canción actual y el estado de reproducción cuando un usuario se conecta
+  socket.emit('song-playing', currentSong);
+  socket.emit('playback-state', { isPaused });
 
   socket.on('disconnect', () => {
     console.log('User disconnected');
